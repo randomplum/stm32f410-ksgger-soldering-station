@@ -1,0 +1,1 @@
+[{"node":"GPIOA.BRR","expanded":true,"format":0},{"node":"GPIOB.ODR","expanded":true,"format":0},{"node":"USART2","expanded":true,"format":0,"pinned":false},{"node":"USART2.ISR","expanded":true,"format":0},{"node":"USART2.RDR","expanded":true,"format":0}]
