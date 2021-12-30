@@ -8,11 +8,13 @@
                 "${workspaceFolder}/common/inc",
                 "${workspaceFolder}/STM32CubeF4/Drivers/CMSIS/Include",
                 "${workspaceFolder}/STM32CubeF4/Drivers/CMSIS/Device/ST/STM32F4xx/Include",
-                "${workspaceFolder}/board/inc"
+                "${workspaceFolder}/board/inc",
+                "${workspaceFolder}/drivers/generalIO",
+                "${workspaceFolder}/drivers/graphics"
             ],
             "defines": [
                 "NDEBUG",
-                "STM32F411xE"
+                "STM32F410Rx"
             ],
             "macFrameworkPath": [],
             "compilerPath": "/Applications/ARM/bin/arm-none-eabi-gcc",

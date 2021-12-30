@@ -22,8 +22,8 @@ set(PROCESSOR_FAMILY ARM_CM4)
 set(STM32_FAMILY "F4")
 set(STM32CUBEDIR "STM32CubeF4")
 string(TOLOWER ${STM32_FAMILY} STM32_FAMILY_LC)
-set(MCU_LD_NAME "STM32F411CEUx")
-set(MCU_NAME "STM32F411xE")
+set(MCU_LD_NAME "STM32F410RBTx")
+set(MCU_NAME "STM32F410Rx")
 string(TOLOWER ${MCU_NAME} MCU_NAME_LC)
 
 set(CMAKE_SYSTEM_NAME               Generic)
@@ -67,13 +67,17 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/app/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/board/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/common/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/generalIO
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics/gui
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics/u8g2
     )
 
 set(SOURCES
    ${STM32CUBEDIR}/Drivers/CMSIS/Device/ST/STM32${STM32_FAMILY}xx/Source/Templates/gcc/startup_${MCU_NAME_LC}.s
    ${STM32CUBEDIR}/Drivers/CMSIS/Device/ST/STM32${STM32_FAMILY}xx/Source/Templates/system_stm32${STM32_FAMILY_LC}xx.c
    common/src/syscalls.c
-   common/src/stm32${STM32_FAMILY_LC}xx_it.c
+   common/src/stm32${STM32_FAMILY_LC}xx_it.c            
    )
 
 
@@ -86,11 +90,20 @@ list(APPEND SOURCES
     ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_rcc.c
     ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_rcc_ex.c
     ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_tim.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_tim_ex.c
     ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_uart.c
     ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_usart.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_adc.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_crc.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_iwdg.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_dma.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_flash.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_adc_ex.c
+    ${STM32CUBE_HAL_DIR}/Src/stm32${STM32_FAMILY_LC}xx_hal_flash_ex.c
 )
 include(app/CMakeLists.txt)
 include(board/CMakeLists.txt)
+include(drivers/CMakeLists.txt)
 
 add_executable(${TARGET} ${SOURCES})
 

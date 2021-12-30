@@ -5,13 +5,37 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Cortex Debug",
+			"cwd": "${workspaceRoot}",
+			"executable": "${workspaceRoot}/build/stm32f4.elf",
+			"name": "JLink",
+			"request": "launch",
+			"type": "cortex-debug",
+			"device": "STM32F410RB",
+			"interface": "swd",
+			"svdFile": "${workspaceRoot}/svd/STM32F411.svd",
+			"runToMain": true,
+			"servertype": "jlink"
+		},
+		{
+			"cwd": "${workspaceRoot}",
+			"executable": "${workspaceRoot}/build/stm32f4.elf",
+			"name": "OpenOCD",
+			"request": "launch",
+			"type": "cortex-debug",
+			"svdFile": "${workspaceRoot}/svd/STM32F411.svd",
+			"configFiles": ["/Users/dominik/stuff/tigard-swd.cfg", "/opt/homebrew/Cellar/open-ocd/0.11.0/share/openocd/scripts/target/stm32f4x.cfg"],
+			"runToMain": true,
+			"servertype": "openocd"
+		},
+		{
+			"name": "BMP",
 			"cwd": "${workspaceRoot}",
 			"executable": "${workspaceRoot}/build/stm32f4.elf",
 			"request": "launch",
 			"svdFile": "${workspaceRoot}/svd/STM32F411.svd",
 			"type": "cortex-debug",
 			"servertype": "bmp",
+			"runToMain": true,
 			"BMPGDBSerialPort": "/dev/cu.usbmodem79ACA1C31",
 //			"powerOverBMP": "enable"
 		}
