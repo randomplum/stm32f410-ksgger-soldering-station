@@ -56,8 +56,14 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .settings 0x8004000:
+  {
+    KEEP(*(.settings))
+  } > FLASH
+
+
   /* The program code and other data goes into FLASH */
-  .text :
+  .text 0x8008000:
   {
     . = ALIGN(4);
     *(.text)           /* .text sections (code) */

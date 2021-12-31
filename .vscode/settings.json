@@ -1,3 +1,4 @@
 {
-	"cmake.configureOnOpen": false
+	"cmake.configureOnOpen": false,
+	"cortex-debug.gdbPath": "/Applications/ARM/bin/arm-none-eabi-gdb"
 }

@@ -2,7 +2,7 @@
  * tempsensors.h
  *
  *  Created on: Jan 12, 2021
- *      Author: David		Original work by Jose (PTDreamer), 2017
+ *      Author: David    Original work by Jose Barros (PTDreamer), 2017
  */
 
 #ifndef GENERALIO_TEMPSENSORS_H_
@@ -13,26 +13,19 @@
 #include "settings.h"
 #include "iron.h"
 
+extern volatile int16_t last_TIP_C, last_TIP_F, last_NTC_F, last_TIP_F_Raw, last_NTC_C, last_TIP_C_Raw;
 
-#define   update_reading 1
-#define   stored_reading 0
-#define   read_Avg	0
-#define   read_Raw	1
-
-int16_t   readColdJunctionSensorTemp_C_x10(void);
-uint16_t  coldJunctionTemp_mC_To_uV(int tempX10);
-uint16_t  readIntTemp_mC(void);
-uint16_t  readTipSensorADC_Avg(void);
-int16_t   readColdJunctionSensorTemp_x10(bool tempUnit);
-uint16_t  readTipTemperatureCompensated(bool update, bool ReadRaw);
-uint16_t  realTempToADC(uint16_t real);
+void detectNTC(void);
+int16_t   readColdJunctionSensorTemp_x10(bool new, bool tempUnit);
+int16_t readTipTemperatureCompensated(bool new, bool mode, bool tempUnit);
 void      setCurrentTip(uint8_t tip);
-tipData*  getCurrentTip();
+tipData_t *getCurrentTip();
 
-long      map(long x, long in_min, long in_max, long out_min, long out_max);
-int16_t   adc2Human(uint16_t adc_value,bool correction, bool tempUnit);
-uint16_t  human2adc(int16_t t);
+int32_t map(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max);
+int16_t   adc2Human_x10(uint16_t adc_value,bool correction, bool tempUnit);
+uint16_t   human2adc(int16_t t);
 int16_t   TempConversion(int16_t temperature, bool conversion, bool x10mode);
+int16_t TempIncrementConversion(int16_t temperature, bool conversion);
 
 
 

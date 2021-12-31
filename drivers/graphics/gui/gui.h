@@ -2,7 +2,7 @@
  * gui.h
  *
  *  Created on: Jan 12, 2021
- *      Author: David		Original work by Jose (PTDreamer), 2017
+ *      Author: David    Original work by Jose Barros (PTDreamer), 2017
  */
 
 #ifndef GRAPHICS_GUI_GUI_H_
@@ -15,5 +15,4 @@
 extern u8g2_t u8g2;
 
 void guiInit(void);
-void guiDraw();
 #endif /* GRAPHICS_GUI_GUI_H_ */

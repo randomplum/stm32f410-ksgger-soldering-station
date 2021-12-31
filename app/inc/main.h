@@ -29,7 +29,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stm32f4xx_hal.h"
@@ -39,19 +38,31 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
+#include <malloc.h>
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern IWDG_HandleTypeDef HIWDG;
-extern CRC_HandleTypeDef HCRC;
+extern IWDG_HandleTypeDef hiwdg;
+extern CRC_HandleTypeDef hcrc;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define DEBUG_ERROR
+
+// This is left here just to have it handy for copying when debugging a specific function
+// Don't uncomment!!
+//               __attribute__((optimize("O0")))
+
+//#define DISABLE_OUTPUT                // Enable to fully disable the tip power (Ex. for debugging)
+#define DEBUG_ERROR                   // Enable to show file/line error messages
+
+#ifdef DEBUG
+extern struct mallinfo mi;
+#define DEBUG_ALLOC                   // Enable alloc debugging in debug builds
+#endif
 
 /* USER CODE END EC */
 
@@ -69,19 +80,42 @@ extern CRC_HandleTypeDef HCRC;
 #endif
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void Program_Handler(void);
+
+
+
+/*
+ * Macro to enable debugging of the allocated memory
+ * max_allocated will hold the max used memory at any time
+ *
+ */
+#ifdef DEBUG_ALLOC
+extern uint32_t max_allocated;
+#define dbg_mem() mi=mallinfo();                  \
+                  if(mi.uordblks>max_allocated){  \
+                    max_allocated=mi.uordblks;     \
+                  }                               \
+
+#define _malloc(x)    malloc(x); dbg_mem()
+#define _calloc(x,y)  calloc(x,y); dbg_mem()
+#define _free(x)      free(x); dbg_mem()
+
+#else
+#define _malloc     malloc
+#define _calloc     calloc
+#define _free       free
+#endif
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
 #define WAKE_input()		HAL_GPIO_ReadPin(WAKE_GPIO_Port, WAKE_Pin)
-#define BUTTON_input()		HAL_GPIO_ReadPin(ROT_ENC_BUTTON_GPIO_Port, ROT_ENC_BUTTON_Pin)
+#define BUTTON_input()		HAL_GPIO_ReadPin(ENC_SW_GPIO_Port, ENC_SW_Pin)
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

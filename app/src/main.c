@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2021 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -51,7 +50,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
@@ -62,40 +60,41 @@ IWDG_HandleTypeDef hiwdg;
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim5;
 
-DMA_HandleTypeDef hdma_memtomem_dma2_stream1;
+DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
+/* USER CODE BEGIN PV */
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
+static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_CRC_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM5_Init(void);
+/* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 void Init(void){
-#if defined OLED_SOFT_SPI || defined OLED_SOFT_I2C
-	  ssd1306_init(&FILL_DMA);
+#if (defined OLED_SPI || defined OLED_I2C) && defined OLED_DEVICE
+  ssd1306_init(&OLED_DEVICE, &FILL_DMA);
 #elif defined OLED_SPI || defined OLED_I2C
-	  ssd1306_init(&OLED_DEVICE, &FILL_DMA);
+  ssd1306_init(&FILL_DMA);
 #endif
-	  guiInit();
-	  ADC_Init(&ADC_DEVICE);
-	  buzzer_init();
-	  restoreSettings();
-	  ironInit(&DELAY_TIMER, &PWM_TIMER,PWM_CHANNEL);
-	  RE_Init((RE_State_t *)&RE1_Data, ROT_ENC_L_GPIO_Port, ROT_ENC_L_Pin, ROT_ENC_R_GPIO_Port, ROT_ENC_R_Pin, ROT_ENC_BUTTON_GPIO_Port, ROT_ENC_BUTTON_Pin);
-	  oled_init(&RE_Get,&RE1_Data);
-}
 
+    guiInit();
+    ADC_Init(&ADC_DEVICE);
+    buzzer_init();
+    restoreSettings();
+    ironInit(&READ_TIMER, &PWM_TIMER,PWM_CHANNEL);
+    RE_Init((RE_State_t *)&RE1_Data, ENC_L_GPIO_Port, ENC_L_Pin, ENC_R_GPIO_Port, ENC_R_Pin, ENC_SW_GPIO_Port, ENC_SW_Pin);
+    oled_init(&RE_Get,&RE1_Data);
+}
 /* USER CODE END 0 */
 
 /**
@@ -105,99 +104,89 @@ void Init(void){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	DebugOpts();
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-  HAL_Init();
-  SystemClock_Config();
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
-  MX_IWDG_Init();
-  MX_CRC_Init();
-  MX_TIM1_Init();
-  MX_TIM5_Init();
-  /* USER CODE BEGIN 2 */
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
+  SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_DMA_Init();
+  MX_GPIO_Init();
+  MX_ADC1_Init();
+  MX_IWDG_Init();
+  MX_CRC_Init();
+  MX_TIM1_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_IWDG_Refresh(&hiwdg);             // Wait 500mS for voltage to stabilize? (Before calibrating ADC)
-  HAL_Delay(500);
+  configurePWMpin(output_Low);
+
+  for(uint32_t t=HAL_GetTick();(HAL_GetTick()-t)<500; ){  // Wait 500ms for voltage to stabilize? (Before calibrating ADC)
+    HAL_IWDG_Refresh(&hiwdg);
+  }
 
   Init();
+
   while (1){
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	oled_handle();
-
+    checkSettings();                                                                          // Check if settings were modified
+    oled_handle();                                                                            // Handle oled drawing
   }
   /* USER CODE END 3 */
 }
 
-/* USER CODE BEGIN 4 */
-
 // Called from SysTick IRQ every 1mS
 void Program_Handler(void) {
-	handle_buzzer();
-	RE_Process(&RE1_Data);
+  handle_buzzer();                                                    // Handle buzzer state
+  RE_Process(&RE1_Data);                                              // Handle Encoder
+  if(systemSettings.settings.WakeInputMode!=mode_stand){
+    readWake();
+  }
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-
-	if(GPIO_Pin==WAKE_Pin){																							// If wake sensor input changed
-		if(systemSettings.settings.WakeInputMode==wakeInputmode_stand){		// In stand mode
-			if(WAKE_input()){
-				setModefromStand(mode_run);
-			}
-			else{
-				setModefromStand(mode_sleep);
-			}
-		}
-		else{																															// In shake mode
-			IronWake(source_wakeInput);
-		}
-	}
-}
-
-void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *_htim){
-	if(_htim == Iron.Pwm_Timer){																			// PWM output low
-		if(ADC_Status==ADC_InitTip){																		// ADC ready?
-			ADC_Status = ADC_SamplingTip;																	// Update status
-			__HAL_TIM_ENABLE(Iron.Delay_Timer);														// Enable Delay Timer and start counting
-																																		// It will trigger the ADC when it overflows and disable by itself (One-pulse mode).
-		}
-	}
-}
-
+/*
+ *
+ *  Timer working in load preload mode! The value loaded now is loaded on next event. That's why the values are reversed!
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *_htim){
-	if(_htim == Iron.Delay_Timer){																		// Delay Timer?
-		if(ADC_Status==ADC_SamplingTip){																// ADC ready?
-			__HAL_TIM_CLEAR_FLAG(Iron.Delay_Timer,TIM_FLAG_UPDATE);				// Clear Delay Timer flag
-			if(HAL_ADC_Start_DMA(&ADC_DEVICE, (uint32_t*)Tip_measures, sizeof(Tip_measures)/ sizeof(uint16_t) )!=HAL_OK){	// Start ADC conversion
-				Error_Handler();
-			}
-		}
-		else{
-			Error_Handler();																						// If ADC_Status!=ADC_SamplingTip, lose of ADC_Status control happened somewhere
-		}
-	}
+  if(_htim == Iron.Read_Timer){
+    __HAL_TIM_CLEAR_FLAG(Iron.Read_Timer,TIM_FLAG_UPDATE);
+
+    if(ADC_Status==ADC_Idle){
+      __HAL_TIM_SET_AUTORELOAD(Iron.Read_Timer,systemSettings.Profile.readPeriod-(systemSettings.Profile.readDelay+1)); // load (period-delay) time
+
+      if(systemSettings.settings.activeDetection && !Iron.Error.safeMode){
+        configurePWMpin(output_High);                                                   // Force PWM high for a few uS (typically 5-10uS)
+        while(__HAL_TIM_GET_COUNTER(Iron.Read_Timer)<(PWM_DETECT_TIME/5));
+      }
+      configurePWMpin(output_Low);                                                      // Force PWM low
+      ADC_Status = ADC_Waiting;
+    }
+    else if(ADC_Status==ADC_Waiting){
+      __HAL_TIM_SET_AUTORELOAD(Iron.Read_Timer,systemSettings.Profile.readDelay);       // Load Delay time
+      ADC_Start_DMA();
+    }
+  }
 }
 
 /**
@@ -237,7 +226,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
@@ -266,7 +255,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
@@ -292,7 +281,6 @@ static void MX_ADC1_Init(void)
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_7;
   sConfig.Rank = 2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -300,7 +288,6 @@ static void MX_ADC1_Init(void)
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = 3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -354,8 +341,8 @@ static void MX_IWDG_Init(void)
 
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
-  hiwdg.Init.Reload = 1249;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
+  hiwdg.Init.Reload = 16000;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
     Error_Handler();
@@ -416,13 +403,14 @@ static void MX_TIM1_Init(void)
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
   sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
+  __HAL_TIM_DISABLE_OCxPRELOAD(&htim1, TIM_CHANNEL_2);
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
@@ -464,17 +452,13 @@ static void MX_TIM5_Init(void)
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim5.Init.Period = 65535;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
   {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
   if (HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_OnePulse_Init(&htim5, TIM_OPMODE_SINGLE) != HAL_OK)
   {
     Error_Handler();
   }
@@ -493,7 +477,7 @@ static void MX_TIM5_Init(void)
 /**
   * Enable DMA controller clock
   * Configure DMA for memory to memory transfers
-  *   hdma_memtomem_dma2_stream1
+  *   hdma_memtomem_dma2_stream0
   */
 static void MX_DMA_Init(void)
 {
@@ -501,26 +485,29 @@ static void MX_DMA_Init(void)
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
 
-  /* Configure DMA request hdma_memtomem_dma2_stream1 on DMA2_Stream1 */
-  hdma_memtomem_dma2_stream1.Instance = DMA2_Stream1;
-  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_0;
-  hdma_memtomem_dma2_stream1.Init.Direction = DMA_MEMORY_TO_MEMORY;
-  hdma_memtomem_dma2_stream1.Init.PeriphInc = DMA_PINC_ENABLE;
-  hdma_memtomem_dma2_stream1.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_memtomem_dma2_stream1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_memtomem_dma2_stream1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-  hdma_memtomem_dma2_stream1.Init.Mode = DMA_NORMAL;
-  hdma_memtomem_dma2_stream1.Init.Priority = DMA_PRIORITY_LOW;
-  hdma_memtomem_dma2_stream1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  if (HAL_DMA_Init(&hdma_memtomem_dma2_stream1) != HAL_OK)
+  /* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
+  hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
+  hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_0;
+  hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+  hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+  hdma_memtomem_dma2_stream0.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  if (HAL_DMA_Init(&hdma_memtomem_dma2_stream0) != HAL_OK)
   {
     Error_Handler( );
   }
 
   /* DMA interrupt init */
-  /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
 
@@ -538,51 +525,46 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, EE_SCL_Pin|EE_SDA_Pin|BUZ0_Pin|BUZ1_Pin
-                          |BUZ2_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, BUZ0_Pin|BUZ1_Pin|BUZ2_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, OLED_SDA_Pin|OLED_SCL_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, SW_SDA_Pin|SW_SCL_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : EE_SCL_Pin EE_SDA_Pin BUZ0_Pin BUZ1_Pin
-                           BUZ2_Pin */
-  GPIO_InitStruct.Pin = EE_SCL_Pin|EE_SDA_Pin|BUZ0_Pin|BUZ1_Pin
-                          |BUZ2_Pin;
+  /*Configure GPIO pins : EE_SCL_Pin EE_SDA_Pin */
+  GPIO_InitStruct.Pin = EE_SCL_Pin|EE_SDA_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : BUZ0_Pin BUZ1_Pin BUZ2_Pin */
+  GPIO_InitStruct.Pin = BUZ0_Pin|BUZ1_Pin|BUZ2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : WAKE_Pin */
-  GPIO_InitStruct.Pin = WAKE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(WAKE_GPIO_Port, &GPIO_InitStruct);
+  /*Configure GPIO pins : WAKE_Pin ENC_SW_Pin */
+  GPIO_InitStruct.Pin = WAKE_Pin|ENC_SW_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : OLED_SDA_Pin OLED_SCL_Pin */
-  GPIO_InitStruct.Pin = OLED_SDA_Pin|OLED_SCL_Pin;
+  /*Configure GPIO pins : SW_SDA_Pin SW_SCL_Pin */
+  GPIO_InitStruct.Pin = SW_SDA_Pin|SW_SCL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : ROT_ENC_BUTTON_Pin */
-  GPIO_InitStruct.Pin = ROT_ENC_BUTTON_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(ROT_ENC_BUTTON_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : ROT_ENC_L_Pin ROT_ENC_R_Pin */
-  GPIO_InitStruct.Pin = ROT_ENC_L_Pin|ROT_ENC_R_Pin;
+  /*Configure GPIO pins : ENC_R_Pin ENC_L_Pin */
+  GPIO_InitStruct.Pin = ENC_R_Pin|ENC_L_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-
 }
+
+/* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
@@ -594,54 +576,10 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
-#ifdef DEBUG_ERROR
-	#if defined OLED_I2C || defined OLED_SPI
-	display_abort();
-	#endif
-	SetFailState(setError);
-	buzzer_fatal_beep();
-	Diag_init();
-
-	char strOut[16];
-	uint8_t outPos=0;
-	uint8_t inPos=0;
-	uint8_t ypos=12;
-	sprintf(strOut,"ERR!! LINE:%u",line);
-	u8g2_DrawStr(&u8g2, 0, 0, strOut);
-	while(1){																									// Divide string in chuncks that fit teh screen width
-		strOut[outPos] = file[inPos];														// Copy char
-		strOut[outPos+1] = 0;																		// Set out string null terminator
-		uint8_t currentWidth = u8g2_GetStrWidth(&u8g2, strOut);	// Get width
-		if(currentWidth<OledWidth){															// If less than oled width, increase input string pos
-			inPos++;
-		}
-		if( (currentWidth>OledWidth) || (strOut[outPos]==0) ){	// If width bigger than oled width or current char null(We reached end of input string)
-			char current = strOut[outPos];												// Store current char
-			strOut[outPos]=0;																			// Set current out char to null
-			u8g2_DrawStr(&u8g2, 0, ypos, strOut);									// Draw string
-			if(current==0){																				// If current is null, we reached end
-				break;																							// Break
-			}
-			outPos=0;																							// Else, reset output position
-			ypos += 12;																						// Increase Y position and continue copying the input string
-		}
-		else{
-			outPos++;																							// Output buffer not filled yet, increase position
-		}
-	};
-
-	#if defined OLED_I2C || defined OLED_SPI
-	update_display_ErrorHandler();
-
-	#elif defined OLED_SOFT_I2C || defined OLED_SOFT_SPI
-	update_display();
-	#endif
-	Reset_onError();
-#endif
-	while(1){
-	}
-
+  __disable_irq();
+  while (1)
+  {
+  }
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -657,9 +595,8 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

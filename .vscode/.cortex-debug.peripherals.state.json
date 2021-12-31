@@ -1,1 +1,1 @@
-[]
+[{"node":"FLASH.SR","expanded":true,"format":0},{"node":"TIM1","expanded":true,"format":0,"pinned":false},{"node":"TIM1.CCMR1_Input","expanded":true,"format":0},{"node":"TIM1.CCMR1_Output","expanded":true,"format":0},{"node":"TIM1.CCER","expanded":true,"format":0},{"node":"TIM1.CCR3","expanded":true,"format":0},{"node":"TIM5","expanded":true,"format":0,"pinned":false}]

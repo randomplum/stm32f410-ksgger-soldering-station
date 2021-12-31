@@ -1,14 +1,20 @@
 list(APPEND SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/ssd1306.c
-    ${CMAKE_CURRENT_LIST_DIR}/gui/boot_screen.c
-    ${CMAKE_CURRENT_LIST_DIR}/gui/calibration_screen.c
-    ${CMAKE_CURRENT_LIST_DIR}/gui/debug_screen.c
-    ${CMAKE_CURRENT_LIST_DIR}/gui/gui_strings.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/boot_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/calibration_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/debug_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/gui_strings.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/iron_screen.c
     ${CMAKE_CURRENT_LIST_DIR}/gui/gui.c
-    ${CMAKE_CURRENT_LIST_DIR}/gui/main_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/main_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/reset_screen.c
     ${CMAKE_CURRENT_LIST_DIR}/gui/oled.c
     ${CMAKE_CURRENT_LIST_DIR}/gui/screen.c
-    ${CMAKE_CURRENT_LIST_DIR}/gui/settings_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/screen_common.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/settings_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/system_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/tip_list_screen.c
+    ${CMAKE_CURRENT_LIST_DIR}/gui/screens/tip_settings_screen.c
     ${CMAKE_CURRENT_LIST_DIR}/gui/widgets.c
     ${CMAKE_CURRENT_LIST_DIR}/u8g2/u8g2_bitmap.c
     ${CMAKE_CURRENT_LIST_DIR}/u8g2/u8g2_box.c

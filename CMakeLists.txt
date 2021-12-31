@@ -70,6 +70,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/generalIO
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics/gui
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics/gui/screens
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/graphics/u8g2
     )
 
@@ -77,7 +78,7 @@ set(SOURCES
    ${STM32CUBEDIR}/Drivers/CMSIS/Device/ST/STM32${STM32_FAMILY}xx/Source/Templates/gcc/startup_${MCU_NAME_LC}.s
    ${STM32CUBEDIR}/Drivers/CMSIS/Device/ST/STM32${STM32_FAMILY}xx/Source/Templates/system_stm32${STM32_FAMILY_LC}xx.c
    common/src/syscalls.c
-   common/src/stm32${STM32_FAMILY_LC}xx_it.c            
+   common/src/stm32${STM32_FAMILY_LC}xx_it.c
    )
 
 

@@ -2,7 +2,7 @@
  * settings.h
  *
  *  Created on: Jan 12, 2021
- *      Author: David		Original work by Jose (PTDreamer), 2017
+ *      Author: David    Original work by Jose Barros (PTDreamer), 2017
  */
 
 #ifndef SETTINGS_H_
@@ -12,176 +12,228 @@
 #include "pid.h"
 #include "board.h"
 
-#define ProfileSize 3 // Number of profiles
-#define TipSize 10    // Number of tips for each profile
-#define TipCharSize 5 // String size for each tip name (Including null terminator)
+#define SWSTRING          "SW: "__DATE__                            // Software version reported in settings screen
+#define SETTINGS_VERSION  15                                        // Change this if you change the settings/profile struct to prevent getting out of sync
+#define LANGUAGE_COUNT    5                                         // Number of languages
+#define ProfileSize       3                                         // Number of profiles
+#define TipSize           20                                        // Number of tips for each profile
+#define TipCharSize       5                                         // String size for each tip name (Including null termination)
+#define _BLANK_TIP        "    "                                    // Empty tip name, 4 spaces. Defined here for quick updating if TipCharSize is modified.
 
-#define T12_Cal250 1400 // Default values to be used in the calibration if not adjusted
-#define T12_Cal350 2050
-#define T12_Cal450 2700
+#ifndef PROFILE_VALUES
 
-#define C210_Cal250 400
-#define C210_Cal350 600
-#define C210_Cal450 900
+#define T12_Cal250        1100                                      // Default values to be used in the calibration if not adjusted
+#define T12_Cal350        1200
+#define T12_Cal450        1300
 
-#define C245_Cal250 1000
-#define C245_Cal350 1500
-#define C245_Cal450 2000
-//#define SWSTRING    "SW: v1.10"                                 // For releases
-#define SWSTRING "SW: git d6532b7"				 // For git
-#define SETTINGS_VERSION 1					 // Change this if you change the struct below to prevent people getting out of sync
-#define StoreSize 2						 // In KB
-#define FLASH_ADDR (0x8000000 + ((FLASH_SZ - StoreSize) * 1024)) // Last 2KB flash (Minimum erase size, page size=2KB)
+#define C210_Cal250       300
+#define C210_Cal350       400
+#define C210_Cal450       500
 
-enum
-{
-	wakeInputmode_shake = 0,
-	wakeInputmode_stand = 1,
+#define C245_Cal250       900
+#define C245_Cal350       1000
+#define C245_Cal450       1100
 
-	wakeButton_Off = 0,
-	wakeButton_On = 1,
+#endif
 
-	wakeShake_Off = 0,
-	wakeShake_On = 1,
 
-	source_wakeInput = 0,
-	source_wakeButton = 1,
+enum system_types{
+  mode_shake              = 0,
+  mode_stand              = 1,
 
-	no_update = 0,
-	needs_update = 1,
+  wake_off                = 0,
+  wake_standby            = 1,
+  wake_sleep              = 2,
+  wake_all                = 3,
 
-	runaway_ok = 0,
-	runaway_25 = 1,
-	runaway_50 = 2,
-	runaway_75 = 3,
-	runaway_100 = 4,
-	runaway_500 = 5,
+  wakeInput               = 0,
+  wakeButton              = 1,
 
-	runaway_triggered = 1,
+  no_update               = 0,
+  needs_update            = 1,
 
-	noError = 0,
-	setError = 1,
+  runaway_ok              = 0,
+  runaway_25              = 1,
+  runaway_50              = 2,
+  runaway_75              = 3,
+  runaway_100             = 4,
+  runaway_500             = 5,
 
-	debug_Off = 0,
-	debug_On = 1,
+  runaway_triggered       = 1,
 
-	calibration_Off = 0,
-	calibration_On = 1,
+  disable                 = 0,
+  enable                  = 1,
 
-	saveKeepingProfiles = 0,
-	saveWipingProfiles = 1,
+  old_reading             = 0,
+  new_reading             = 1,
 
-	setup_Off = 0,
-	setup_On = 1,
+  read_average            = 0,
+  read_unfiltered         = 1,
 
-	encoder_normal = 0,
-	encoder_reverse = 1,
+  encoder_normal          = 0,
+  encoder_reverse         = 1,
 
-	mode_Celsius = 0,
-	mode_Farenheit = 1,
+  mode_Celsius            = 0,
+  mode_Farenheit          = 1,
 
-	mode_sleep = 0,
-	mode_run = 1,
+  mode_sleep              = 0,
+  mode_standby            = 1,
+  mode_run                = 2,
+  mode_boost              = 3,
 
-	initialized = 0,
+  initialized             = 0,
 
-	filter_avg = 0,
-	filter_ema = 1,
+  profile_T12             = 0,
+  profile_C245            = 1,
+  profile_C210            = 2,
+  profile_None            = 0xff,
 
-	buzzer_Off = 0,
-	buzzer_On = 1,
+  save_Settings           = 1,
+  reset_Profiles          = 0x80,
+  reset_Profile           = 0x81,
+  reset_Settings          = 0x82,
+  reset_All               = 0x83,
 
-	profile_T12 = 0,
-	profile_C245 = 1,
-	profile_C210 = 2,
-	profile_None = 0xff
+  keepProfiles            = 1,
+  wipeProfiles            = 0x80,
+
+  output_PWM,
+  output_Low,
+  output_High,
+
+  lang_english             = 0,
+  lang_russian             = 1,
+  lang_swedish             = 2,
+  lang_german              = 3,
+  lang_turkish             = 4,
+
+
+  dim_off                  = 0,
+  dim_sleep                = 1,
+  dim_always               = 2,
+
+  error_sleep              = 0,
+  error_run                = 1,
+  error_resume             = 2,
+
 };
 
-typedef struct ironSettings_t
-{
-	uint16_t Temperature;
-	uint16_t Time;
-} ironSettings_t;
 
-typedef struct tipData
-{
-	uint16_t calADC_At_250;
-	uint16_t calADC_At_350;
-	uint16_t calADC_At_450;
-	char name[TipCharSize];
-	pid_values_t PID;
-} tipData;
+__attribute__((aligned(4))) typedef struct{
+  int8_t        coefficient;          // Filter normally applied
+  int8_t        counter;              // Counter for threshold limit
+  int8_t        min;                  // Minimum filtering when decreasing
+  int8_t        step;                 // Start decreasing the filter coefficient, assume it's a fast temperature change, so provide faster response
+  int8_t        count_limit;          // Count the spikes, if exceeding this limit, start reducing the filter coefficient.
+  uint16_t      threshold;            // Base noise limit, if diff exceeds this limit, trigger threshold limit and start decreasing filtering
+  uint16_t      reset_threshold;      // Threshold for completely resetting the filter
+}filter_t;
 
-__attribute__((aligned(4))) typedef struct
-{
-	uint8_t ID;
-	tipData tip[TipSize];
-	uint8_t NotInitialized;
-	uint8_t impedance;
-	uint16_t power;
-	uint8_t tempUnit;
-	uint8_t currentNumberOfTips;
-	uint8_t currentTip;
-	uint16_t UserSetTemperature;
-	uint16_t MaxSetTemperature;
-	uint16_t MinSetTemperature;
-	uint16_t sleepTimeout;
-	uint16_t pwmPeriod;
-	uint16_t pwmDelay;
-	uint16_t noIronValue;
-	uint8_t filterMode;
-	uint8_t filterFactor;
-	uint16_t Cal250_default;
-	uint16_t Cal350_default;
-	uint16_t Cal450_default;
-	int8_t CalNTC;
-} profile_t;
+__attribute__((aligned(4))) typedef struct{
+  uint16_t      calADC_At_250;
+  uint16_t      calADC_At_400;
+  char          name[TipCharSize];
+  pid_values_t  PID;
+}tipData_t;
 
-__attribute__((aligned(4))) typedef struct
-{
-	uint32_t version; // Used to track if a reset is needed on firmware upgrade
-	uint8_t contrast;
-	uint8_t OledOffset;
-	uint16_t errorDelay;
-	uint16_t guiUpdateDelay;
-	uint8_t currentProfile;
-	uint8_t saveSettingsDelay;
-	uint8_t initMode;
-	uint8_t tempStep;
-	bool tempUnit;
-	bool buzzerMode;
-	bool wakeOnButton;
-	bool wakeOnShake;
-	bool WakeInputMode;
-	bool EncoderMode;
-	bool NotInitialized; // Always 1 if flash is erased
-} settings_t;
+__attribute__((aligned(4))) typedef struct{
+  uint8_t       enabled;
+  uint8_t       detection;
+  uint8_t       pullup;
+  uint16_t      pull_res;
+  uint16_t      NTC_res;
+  uint16_t      NTC_beta;
+  uint16_t      high_NTC_res;
+  uint16_t      low_NTC_res;
+  uint16_t      high_NTC_beta;
+  uint16_t      low_NTC_beta;
+}ntc_data_t;
 
-typedef struct
-{
-	profile_t Profile[ProfileSize];
-	uint32_t ProfileChecksum[ProfileSize];
-	settings_t settings;
-	uint32_t settingsChecksum;
-} flashSettings_t;
+__attribute__((aligned(4))) typedef struct{
+  uint8_t       state;                // Always 0xFF if flash is erased
+  uint8_t       ID;
+  uint8_t       impedance;
+  uint8_t       tempUnit;
+  uint8_t       currentNumberOfTips;
+  uint8_t       currentTip;
+  uint8_t       pwmMul;
+  uint8_t       errorResumeMode;
+  filter_t      tipFilter;
+  ntc_data_t    ntc;
+  uint16_t      standbyTemperature;
+  uint16_t      UserSetTemperature;
+  uint16_t      MaxSetTemperature;
+  uint16_t      MinSetTemperature;
+  uint16_t      boostTemperature;
+  uint16_t      readPeriod;
+  uint16_t      readDelay;
+  uint16_t      noIronValue;
+  uint16_t      power;
+  uint16_t      calADC_At_0;
+  uint16_t      Cal250_default;
+  uint16_t      Cal400_default;
+  tipData_t     tip[TipSize];
+  uint32_t      errorTimeout;
+  uint32_t      boostTimeout;
+  uint32_t      sleepTimeout;
+  uint32_t      standbyTimeout;
+}profile_t;
 
-typedef struct
-{
-	settings_t settings;
-	uint32_t settingsChecksum;
-	profile_t Profile;
-	uint32_t ProfileChecksum;
-	bool setupMode;
-} systemSettings_t;
+__attribute__((aligned(4))) typedef struct{
+  uint8_t       language;
+  uint8_t       contrast;
+  uint8_t       OledOffset;
+  uint8_t       dim_mode;
+  uint8_t       dim_inSleep;
+  uint8_t       currentProfile;
+  uint8_t       saveSettingsDelay;
+  uint8_t       initMode;
+  uint8_t       tempUnit;
+  uint8_t       tempStep;
+  uint8_t       tempBigStep;
+  uint8_t       guiTempDenoise;
+  uint8_t       activeDetection;
+  uint8_t       buzzerMode;
+  uint8_t       buttonWakeMode;
+  uint8_t       shakeWakeMode;
+  uint8_t       shakeFiltering;
+  uint8_t       WakeInputMode;
+  uint8_t       StandMode;
+  uint8_t       EncoderMode;
+  uint8_t       lvp;
+  uint8_t       debugEnabled;
+  uint8_t       state;              // Always 0xFF if flash is erased
+  uint16_t      guiUpdateDelay;
+  uint32_t      dim_Timeout;
+  uint32_t      version;            // Used to track if a reset is needed on firmware upgrade
+}settings_t;
+
+__attribute__((aligned(4))) typedef struct{
+  settings_t    settings;
+  uint32_t      settingsChecksum;
+  profile_t     Profile;
+  uint32_t      ProfileChecksum;
+  uint8_t       save_Flag;
+  uint8_t       setupMode;
+  uint8_t       isSaving;
+}systemSettings_t;
+
+__attribute__((aligned(4))) typedef struct{
+  profile_t     Profile[ProfileSize];
+  uint32_t      ProfileChecksum[ProfileSize];
+  settings_t    settings;
+  uint32_t      settingsChecksum;
+}flashSettings_t;
 
 extern systemSettings_t systemSettings;
-extern flashSettings_t *flashSettings;
 
-void Diag_init(void);
-void saveSettings(bool wipeAllProfileData);
+void Oled_error_init(void);
+void checkSettings(void);
+void saveSettingsFromMenu(uint8_t mode);
+void saveSettings(uint8_t mode);
 void restoreSettings();
-uint32_t ChecksumSettings(settings_t *settings);
-uint32_t ChecksumProfile(profile_t *profile);
+uint32_t ChecksumSettings(settings_t* settings);
+uint32_t ChecksumProfile(profile_t* profile);
 void resetSystemSettings(void);
 void resetCurrentProfile(void);
 void storeTipData(uint8_t tip);
